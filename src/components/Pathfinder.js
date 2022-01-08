@@ -4,8 +4,8 @@ import Astar from "../algorithms/astar.js";
 import "./Pathfinder.css";
 import "./Node.css";
 
-let cols = 5;
-let rows = 5;
+let cols = 20;
+let rows = 20;
 
 const NODE_START_ROW = 0;
 const NODE_START_COL = 0;
@@ -16,7 +16,7 @@ const Pathfinder = () => {
     const [Grid, setGrid] = useState([]);
     const [Path, setPath] = useState([]);
     const [VisitedNodes, setVisitedNodes] = useState([]);
-
+    const [ResultsText, setResultsText] = useState("");
     useEffect(() => {
         initializeGrid()
     }, [])
@@ -30,11 +30,15 @@ const Pathfinder = () => {
         createSpot(grid);
         addNeighbors(grid);
         setGrid(grid);
+        setResultsText("");
         const startNode = grid[NODE_START_ROW][NODE_START_COL];
         const endNode = grid[NODE_END_ROW][NODE_END_COL];
+        var timeTaken = performance.now();
         let path = Astar(startNode, endNode);
+        timeTaken = performance.now() - timeTaken
         startNode.isWall = false;
         endNode.isWall = false;
+        setResultsText("Time: " + (timeTaken).toString() + " ms\nLength: " + (path.path.length));
         setPath(path.path);
         setVisitedNodes(path.visitedNodes);
     }
@@ -50,7 +54,7 @@ const Pathfinder = () => {
 
     const addNeighbors = (grid) => {
         for(let i = 0; i < rows; i++) {
-            for(let j = 0; j < rows; j++) {
+            for(let j = 0; j < cols; j++) {
                 grid[i][j].addSpotNeighbors(grid);
             }
         }
