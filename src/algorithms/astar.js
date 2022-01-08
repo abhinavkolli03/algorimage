@@ -22,7 +22,6 @@ function Astar(startNode, endNode) {
                 temp = temp.previous;
             }
             console.log("found")
-            console.log(path)
             path = path.slice(1, -1)
             visitedNodes = visitedNodes.slice(1, -1)
             return {path, visitedNodes};
@@ -53,10 +52,6 @@ function Astar(startNode, endNode) {
             }
         }
     }
-    console.log(path)
-    console.log(openSet, "openset")
-    console.log(closedSet, "closedset")
-    console.log(visitedNodes)
     console.log("No path found")
     path = path.slice(1, -1)
     visitedNodes = visitedNodes.slice(1, -1)

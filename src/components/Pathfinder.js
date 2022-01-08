@@ -7,6 +7,10 @@ import "./Node.css";
 let cols = 20;
 let rows = 20;
 
+var timeTaken = 0;
+var lengthOfPath = 0;
+var algorithmPerformed = false;
+
 const NODE_START_ROW = 0;
 const NODE_START_COL = 0;
 const NODE_END_ROW = rows-1;
@@ -30,15 +34,18 @@ const Pathfinder = () => {
         createSpot(grid);
         addNeighbors(grid);
         setGrid(grid);
-        setResultsText("");
+        performAlgorithm(grid);
+        return(grid);
+    }
+
+    function performAlgorithm(grid) {
+        setResultsText("Time: 0 ms Length: 0")
         const startNode = grid[NODE_START_ROW][NODE_START_COL];
         const endNode = grid[NODE_END_ROW][NODE_END_COL];
-        var timeTaken = performance.now();
+        timeTaken = performance.now();
         let path = Astar(startNode, endNode);
-        timeTaken = performance.now() - timeTaken
-        startNode.isWall = false;
-        endNode.isWall = false;
-        setResultsText("Time: " + (timeTaken).toString() + " ms\nLength: " + (path.path.length));
+        timeTaken = Math.trunc((performance.now() - timeTaken) * 1000) / 1000;
+        lengthOfPath = path.path.length;
         setPath(path.path);
         setVisitedNodes(path.visitedNodes);
     }
@@ -60,6 +67,14 @@ const Pathfinder = () => {
         }
     }
 
+    const addWalls = (grid) => {
+        for(let i = 0; i < rows; i++) {
+            for(let j = 0; j < cols; j++) {
+                if(Math.random(1) < 0.2)
+                    grid[i][j].addSpotWall(grid);
+            }
+        }
+    }
     //spot constructor
     function Spot(i, j) {
         this.x = i;
@@ -71,10 +86,12 @@ const Pathfinder = () => {
         this.h = 0;
         this.neighbors = [];
         this.isWall = false;
-        if(Math.random(1) < 0.2 && !this.isEnd) {
-            this.isWall = true;
-        }
         this.previous = undefined;
+        this.addSpotWall = function(grid) {
+            if(!this.isEnd) {
+                this.isWall = true;
+            }
+        }
         this.addSpotNeighbors = function(grid) {
             let x = this.x;
             let y = this.y;
@@ -127,6 +144,12 @@ const Pathfinder = () => {
                 document.getElementById(`node-${node.x}-${node.y}`).className = "node node-shortest-path";
             }, 2 * i); //frame rate
         }
+        setResultsText("Time: " + timeTaken + " ms Length: " + lengthOfPath)
+        return (
+            <div>
+                <p>{ResultsText}</p>
+            </div>
+        )
     };
 
     const visualizePath = () => {
@@ -144,20 +167,34 @@ const Pathfinder = () => {
         }
     };
 
-    const resetGrid = () => {
+    const randomizeWalls = () => {
+        let wallGrid = initializeGrid()
+        addWalls(wallGrid)
+        addNeighbors(wallGrid);
+        setGrid(wallGrid)
+        performAlgorithm(wallGrid)
+        clearVisualVisitedNodes()
+    }
+
+    const reset = () => {
         initializeGrid()
+        clearVisualVisitedNodes()
+    }
+
+    function clearVisualVisitedNodes() {
         for(let i = 0; i < VisitedNodes.length; i++) {
             const node = VisitedNodes[i];
             document.getElementById(`node-${node.x}-${node.y}`).className = "node";
         }
-        gridWithNode()
     }
 
     return (
         <div className="Wrapper">
             <button onClick={visualizePath}>Visualize Path</button>
-            <button onClick={resetGrid}>Reset Grid</button>
+            <button onClick={randomizeWalls}>Randomize Walls</button>
+            <button onClick={reset}>Reset Board</button>
             <h1>Pathfinding Visualizer</h1>
+            <p>{ResultsText}</p>
             {gridWithNode()}
         </div>
     );
