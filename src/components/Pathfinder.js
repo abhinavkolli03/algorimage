@@ -4,7 +4,7 @@ import Astar from "../algorithms/astar.js";
 import "./Pathfinder.css";
 import "./Node.css";
 
-let cols = 20;
+let cols = 50;
 let rows = 20;
 
 var timeTaken = 0;
@@ -13,10 +13,10 @@ var lengthOfPath = 0;
 var mousePressed = false;
 var buttonBools = [false, false, false];
 
-var NODE_START_ROW = 10;
-var NODE_START_COL = 5;
-var NODE_END_ROW = rows-1;
-var NODE_END_COL = cols-1;
+var NODE_START_ROW = 9;
+var NODE_START_COL = 12;
+var NODE_END_ROW = 9;
+var NODE_END_COL = 37;
 
 const Pathfinder = () => {
     const [Grid, setGrid] = useState([]);
@@ -119,7 +119,8 @@ const Pathfinder = () => {
         var newGrid = addMousePressedObject(Grid, row.row, col.col);
         mousePressed = true;
         if(buttonBools[1] || buttonBools[2]) {
-            newGrid = initializeGrid()
+            newGrid = Grid
+            createSpot(newGrid)
         }
         addNeighbors(newGrid);
         setGrid(newGrid);
@@ -142,7 +143,7 @@ const Pathfinder = () => {
 
     const addMousePressedObject = (grid, row, col) => {
         const tempNode = grid[row][col];
-        if(buttonBools[0]) {
+        if(buttonBools[0] && !tempNode.isEnd) {
             tempNode.isWall = !tempNode.isWall
             grid[row][col] = tempNode;
         }
@@ -184,6 +185,7 @@ const Pathfinder = () => {
                                         onMouseEnter={(row, col) => handleMouseEnter(row, col)}
                                         onMouseUp={() => handleMouseUp()}
                                     />
+                                    //<p>hi</p>
                                 );
                             })}
                         </div>
