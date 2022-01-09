@@ -4,7 +4,7 @@ import Astar from "../algorithms/astar.js";
 import "./Pathfinder.css";
 import "./Node.css";
 
-let cols = 50;
+let cols = 51;
 let rows = 20;
 
 var timeTaken = 0;
