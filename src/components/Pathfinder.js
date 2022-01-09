@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {Component, useState, useEffect} from 'react';
 import Node from "./Node";
 import Astar from "../algorithms/astar.js";
 import "./Pathfinder.css";
@@ -9,18 +9,21 @@ let rows = 20;
 
 var timeTaken = 0;
 var lengthOfPath = 0;
-var algorithmPerformed = false;
 
-const NODE_START_ROW = 0;
-const NODE_START_COL = 0;
-const NODE_END_ROW = rows-1;
-const NODE_END_COL = cols-1;
+var mousePressed = false;
+var buttonBools = [false, false, false];
+
+var NODE_START_ROW = 10;
+var NODE_START_COL = 5;
+var NODE_END_ROW = rows-1;
+var NODE_END_COL = cols-1;
 
 const Pathfinder = () => {
     const [Grid, setGrid] = useState([]);
     const [Path, setPath] = useState([]);
     const [VisitedNodes, setVisitedNodes] = useState([]);
     const [ResultsText, setResultsText] = useState("");
+
     useEffect(() => {
         initializeGrid()
     }, [])
@@ -62,6 +65,7 @@ const Pathfinder = () => {
     const addNeighbors = (grid) => {
         for(let i = 0; i < rows; i++) {
             for(let j = 0; j < cols; j++) {
+                grid[i][j].neighbors = []
                 grid[i][j].addSpotNeighbors(grid);
             }
         }
@@ -110,6 +114,55 @@ const Pathfinder = () => {
         };
     }  
 
+    function handleMouseDown(row, col) {
+        clearVisualVisitedNodes()
+        var newGrid = addMousePressedObject(Grid, row.row, col.col);
+        mousePressed = true;
+        if(buttonBools[1] || buttonBools[2]) {
+            newGrid = initializeGrid()
+        }
+        addNeighbors(newGrid);
+        setGrid(newGrid);
+        performAlgorithm(newGrid);
+    }
+
+    function handleMouseEnter(row, col) {
+        //clearVisualVisitedNodes()
+        if(buttonBools[0] && mousePressed) {
+            const newGrid = addMousePressedObject(Grid, row.row, col.col);
+            addNeighbors(newGrid);
+            setGrid(newGrid);
+            performAlgorithm(newGrid);
+        }
+    }
+
+    function handleMouseUp() {
+        mousePressed = false
+    }
+
+    const addMousePressedObject = (grid, row, col) => {
+        const tempNode = grid[row][col];
+        if(buttonBools[0]) {
+            tempNode.isWall = !tempNode.isWall
+            grid[row][col] = tempNode;
+        }
+        else if(buttonBools[1] || buttonBools[2])
+            grid = changeStartOrEndNode(grid, row, col)
+        return grid;
+    }
+
+    function changeStartOrEndNode(grid, row, col) {
+        if(buttonBools[1]) {
+            NODE_START_ROW = row
+            NODE_START_COL = col
+        } else {
+            NODE_END_ROW = row
+            NODE_END_COL = col
+        }
+        clearVisualVisitedNodes()
+        return grid;
+    }
+
     //Grid with node
     const gridWithNode = () => {
         return (
@@ -117,16 +170,19 @@ const Pathfinder = () => {
                 {Grid.map((row, rowIndex) => {
                     return (
                         <div key={rowIndex} className="rowWrapper">
-                            {row.map((col, colIndex) => {
-                                const {isStart, isEnd, isWall} = col;
+                            {row.map((node, nodeIndex) => {
+                                const {isStart, isEnd, isWall} = node;
                                 return (
-                                    <Node 
-                                        key={colIndex} 
+                                    <Node key={nodeIndex} 
                                         isStart={isStart} 
                                         isEnd={isEnd} 
-                                        row={rowIndex} 
-                                        col={colIndex}
                                         isWall = {isWall}
+                                        row = {rowIndex}
+                                        col = {nodeIndex}
+                                        mousePressed = {mousePressed}
+                                        onMouseDown={(row, col) => handleMouseDown(row, col)}
+                                        onMouseEnter={(row, col) => handleMouseEnter(row, col)}
+                                        onMouseUp={() => handleMouseUp()}
                                     />
                                 );
                             })}
@@ -188,14 +244,29 @@ const Pathfinder = () => {
         }
     }
 
+    const alterWallsBool = () => {
+        buttonBools = [!buttonBools[0], false, false];
+    }
+
+    const alterStartBool = () => {
+        buttonBools = [false, !buttonBools[1], false];
+    }
+
+    const alterEndBool = () => {
+        buttonBools = [false, false, !buttonBools[2]];
+    }
+
     return (
         <div className="Wrapper">
+            <h1>Pathfinding Visualizer</h1>
             <button onClick={visualizePath}>Visualize Path</button>
             <button onClick={randomizeWalls}>Randomize Walls</button>
             <button onClick={reset}>Reset Board</button>
-            <h1>Pathfinding Visualizer</h1>
             <p>{ResultsText}</p>
             {gridWithNode()}
+            <button onClick={alterWallsBool}>Change Walls</button>
+            <button onClick={alterStartBool}>Change Start</button>
+            <button onClick={alterEndBool}>Change End</button>
         </div>
     );
 }
