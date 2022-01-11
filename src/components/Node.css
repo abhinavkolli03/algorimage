@@ -31,24 +31,29 @@
       transform: scale(0.3);
       background-color: rgba(0, 0, 66, 0.75);
       border-radius: 10%;
+      border-color: orange
     }
   
     25% {
         background-color: yellow;
+        border-color: yellow;
     }
 
     50% {
       background-color: yellow;
+      border-color: yellow;
     }
   
     75% {
       transform: scale(1.2);
       background-color: orange;
+      border-color: orange;
     }
   
     100% {
       transform: scale(1);
       background-color: orange;
+      border: 2px solid black;
     }
 }
   

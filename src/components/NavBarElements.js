@@ -14,6 +14,26 @@ export const Nav = styled.nav`
   /* justify-content: flex-start; */
 `;
 
+export const PathfinderToolbar = styled.nav`
+  background: #784072;
+  box-shadow: 0px 2px 3px 0.5px rgba(0,0,0,.8);
+  height: 70px;
+  display: flex;
+  text-align: center;
+  justify-content: space-evenly;
+  padding: 0.5rem calc((100vw - 1000px) / 2);
+  z-index: 10;
+`;
+
+export const PathfinderResults = styled.nav`
+  background: #512889;
+  box-shadow: 0px 2px 3px 0.5px rgba(0,0,0,.8);
+  height: 25px;
+  display: flex;
+  text-align: center;
+  justify-content: space-evenly;
+`;
+
 export const NavLink = styled(Link)`
   color: #fff;
   display: flex;
@@ -55,13 +75,11 @@ export const NavMenu = styled.div`
   }
 `;
 
-export const NavBtn = styled.nav`
+export const Btn = styled.nav`
   display: flex;
   align-items: center;
   margin-right: 24px;
-  /* Third Nav */
-  /* justify-content: flex-end;
-  width: 100vw; */
+  padding: 10px
   @media screen and (max-width: 768px) {
     display: none;
   }
