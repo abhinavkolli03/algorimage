@@ -1,8 +1,13 @@
 import React, {Component, useState, useEffect} from 'react';
 import Node from "./Node";
 import Astar from "../algorithms/astar.js";
+import Bfs from "../algorithms/bfs.js";
 import "./Pathfinder.css";
 import "./Node.css";
+import Slider from '@material-ui/core/Slider';
+import Stack from 'stack-styled'
+import {PathfinderToolbar, PathfinderResults} from './NavBarElements.js'
+import Button from 'reactive-button';
 
 let cols = 51;
 let rows = 20;
@@ -16,13 +21,15 @@ var buttonBools = [false, false, false];
 var NODE_START_ROW = 9;
 var NODE_START_COL = 12;
 var NODE_END_ROW = 9;
-var NODE_END_COL = 37;
+var NODE_END_COL = 38;
 
 const Pathfinder = () => {
     const [Grid, setGrid] = useState([]);
     const [Path, setPath] = useState([]);
     const [VisitedNodes, setVisitedNodes] = useState([]);
     const [ResultsText, setResultsText] = useState("");
+    const [ResultsTwoText, setResultsTwoText] = useState("");
+    const [WallDensity, setWallDensity] = useState(10.0);
 
     useEffect(() => {
         initializeGrid()
@@ -42,7 +49,8 @@ const Pathfinder = () => {
     }
 
     function performAlgorithm(grid) {
-        setResultsText("Time: 0 ms Length: 0")
+        setResultsText("Time: 0 ms")
+        setResultsTwoText("Length: 0 units")
         const startNode = grid[NODE_START_ROW][NODE_START_COL];
         const endNode = grid[NODE_END_ROW][NODE_END_COL];
         timeTaken = performance.now();
@@ -74,7 +82,7 @@ const Pathfinder = () => {
     const addWalls = (grid) => {
         for(let i = 0; i < rows; i++) {
             for(let j = 0; j < cols; j++) {
-                if(Math.random(1) < 0.2)
+                if(Math.random(1) < WallDensity)
                     grid[i][j].addSpotWall(grid);
             }
         }
@@ -200,12 +208,14 @@ const Pathfinder = () => {
             setTimeout(() => {
                 const node = shortestPathNodes[i];
                 document.getElementById(`node-${node.x}-${node.y}`).className = "node node-shortest-path";
-            }, 2 * i); //frame rate
+            }, 8 * i); //frame rate
         }
-        setResultsText("Time: " + timeTaken + " ms Length: " + lengthOfPath)
+        setResultsText("Time: " + timeTaken + " ms")
+        setResultsTwoText("Length: " + lengthOfPath + " units")
         return (
             <div>
                 <p>{ResultsText}</p>
+                <p>{ResultsTwoText}</p>
             </div>
         )
     };
@@ -215,12 +225,12 @@ const Pathfinder = () => {
             if(i === VisitedNodes.length) {
                 setTimeout(() => {
                     visualizeShortestPath(Path);
-                }, 5 * i); //delayed frame rate
+                }, 15 * i); //delayed frame rate
             } else {
                 setTimeout(() => {
                     const node = VisitedNodes[i];
                     document.getElementById(`node-${node.x}-${node.y}`).className = "node node-visited";
-                }, 5 * i)
+                }, 15 * i)
             }
         }
     };
@@ -237,6 +247,7 @@ const Pathfinder = () => {
     const reset = () => {
         initializeGrid()
         clearVisualVisitedNodes()
+        setWallDensity(0)
     }
 
     function clearVisualVisitedNodes() {
@@ -258,17 +269,44 @@ const Pathfinder = () => {
         buttonBools = [false, false, !buttonBools[2]];
     }
 
+    function valuetext(value) {
+        setWallDensity(value / 100)
+        //randomizeWalls()
+        return `${value}%`
+    }
+
     return (
         <div className="Wrapper">
-            <h1>Pathfinding Visualizer</h1>
-            <button onClick={visualizePath}>Visualize Path</button>
-            <button onClick={randomizeWalls}>Randomize Walls</button>
-            <button onClick={reset}>Reset Board</button>
-            <p>{ResultsText}</p>
+            <PathfinderToolbar>
+                <Button onClick={visualizePath} idleText={'Visualize Path'} color={'green'}/>
+                <Button onClick={clearVisualVisitedNodes} idleText={'Clear Path'} color={'yellow'}/>
+                <Button onClick={reset} idleText={'Reset Board'} color={'red'}/>
+            </PathfinderToolbar>
+            <PathfinderResults style={{color:'white'}}>
+                <h5>{ResultsText}</h5>
+                <h5>{ResultsTwoText}</h5>
+            </PathfinderResults>
             {gridWithNode()}
-            <button onClick={alterWallsBool}>Change Walls</button>
-            <button onClick={alterStartBool}>Change Start</button>
-            <button onClick={alterEndBool}>Change End</button>
+            <PathfinderToolbar>
+                <div className="buttonBlock">
+                    <h5 style={{color: 'white'}}>Wall Density</h5>
+                    <Slider
+                        aria-label="Wall Density"
+                        defaultValue={WallDensity}
+                        getAriaValueText={valuetext}
+                        color = "secondary"
+                        size = "medium"
+                        thumbSize = "small"
+                        valueLabelDisplay="auto"
+                        min={0}
+                        max={50}
+                    />
+                </div>
+                <Button onClick={randomizeWalls} idleText={'Randomize Walls'} color={'violet'} rounded/>
+                <Button onClick={alterWallsBool} idleText={'Customize Walls'} loadingText={'Tap on grid...'} messageDuration={2000} color={'violet'} rounded/>
+                <Button onClick={alterStartBool} idleText={'Move Start'} color={'green'} rounded/>
+                <Button onClick={alterEndBool} idleText={'Move End'} color={'red'} rounded/>
+            </PathfinderToolbar>
         </div>
     );
 }
