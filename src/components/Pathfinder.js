@@ -4,7 +4,8 @@ import Astar from "../algorithms/astar.js";
 import Bfs from "../algorithms/bfs.js";
 import "./Pathfinder.css";
 import "./Node.css";
-import Slider from '@material-ui/core/Slider';
+import {Slider} from '@material-ui/core';
+import Select from 'react-select'
 import Stack from 'stack-styled'
 import {PathfinderToolbar, PathfinderResults} from './NavBarElements.js'
 import Button from 'reactive-button';
@@ -14,6 +15,11 @@ let rows = 20;
 
 var timeTaken = 0;
 var lengthOfPath = 0;
+
+//dropdowns
+let algorithmsOptions = [{ value: 0, label: 'A* Search' },
+{ value: 1, label: 'Breadth-First Search' }]
+var switchAlgorithm = 0
 
 var mousePressed = false;
 var buttonBools = [false, false, false];
@@ -54,11 +60,20 @@ const Pathfinder = () => {
         const startNode = grid[NODE_START_ROW][NODE_START_COL];
         const endNode = grid[NODE_END_ROW][NODE_END_COL];
         timeTaken = performance.now();
-        let path = Astar(startNode, endNode);
+        let path = testProperAlgorithm(startNode, endNode);
         timeTaken = Math.trunc((performance.now() - timeTaken) * 1000) / 1000;
         lengthOfPath = path.path.length;
         setPath(path.path);
         setVisitedNodes(path.visitedNodes);
+    }
+
+    function testProperAlgorithm(startNode, endNode) {
+        switch(switchAlgorithm) {
+            case 0:
+                return Astar(startNode, endNode)
+            case 1:
+                return Bfs(startNode, endNode)
+        }
     }
 
     //creates spot
@@ -221,6 +236,7 @@ const Pathfinder = () => {
     };
 
     const visualizePath = () => {
+        performAlgorithm(Grid)
         for(let i = 0; i <= VisitedNodes.length; i++) {
             if(i === VisitedNodes.length) {
                 setTimeout(() => {
@@ -247,7 +263,7 @@ const Pathfinder = () => {
     const reset = () => {
         initializeGrid()
         clearVisualVisitedNodes()
-        setWallDensity(0)
+        setWallDensity(10)
     }
 
     function clearVisualVisitedNodes() {
@@ -275,12 +291,24 @@ const Pathfinder = () => {
         return `${value}%`
     }
 
+    const handleAlgoChange = (selectedOption) => {
+        for(let i = 0; i < algorithmsOptions.length; i++) {
+            if(algorithmsOptions[i].label === selectedOption.label) {
+                switchAlgorithm = i
+                clearVisualVisitedNodes()
+            }
+        }
+        performAlgorithm(Grid)
+    }
+
     return (
         <div className="Wrapper">
             <PathfinderToolbar>
                 <Button onClick={visualizePath} idleText={'Visualize Path'} color={'green'}/>
                 <Button onClick={clearVisualVisitedNodes} idleText={'Clear Path'} color={'yellow'}/>
                 <Button onClick={reset} idleText={'Reset Board'} color={'red'}/>
+                <Select text={algorithmsOptions[switchAlgorithm]} onChange={handleAlgoChange}
+                options={algorithmsOptions}/>
             </PathfinderToolbar>
             <PathfinderResults style={{color:'white'}}>
                 <h5>{ResultsText}</h5>
