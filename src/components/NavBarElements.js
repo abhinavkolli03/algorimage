@@ -17,7 +17,7 @@ export const Nav = styled.nav`
 export const PathfinderToolbar = styled.nav`
   background: #784072;
   box-shadow: 0px 2px 3px 0.5px rgba(0,0,0,.8);
-  height: 70px;
+  height: 60px;
   display: flex;
   text-align: center;
   justify-content: space-evenly;

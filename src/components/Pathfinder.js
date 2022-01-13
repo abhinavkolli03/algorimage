@@ -12,12 +12,13 @@ import Select from 'react-select'
 import Stack from 'stack-styled'
 import {PathfinderToolbar, PathfinderResults} from './NavBarElements.js'
 import Button from 'reactive-button';
+import RecursiveDivision from '../mazes/recursive_division.js'
 
 var speed = 30
 var playing = false
 
 let cols = 51;
-let rows = 20;
+let rows = 21;
 
 var timeTaken = 0;
 var lengthOfPath = 0;
@@ -40,7 +41,13 @@ var speedOptions = [
 { value: 1, label: "Moderate", speed: 75},
 { value: 2, label: "Fast", speed: 30},
 { value: 3, label: "Quick", speed: 5}]
-var switchSpeed = 1
+var switchSpeed = 2
+
+var mazeOptions = [
+{ value: 0, label: "Randomized Walls"},
+{ value: 1, label: "Recursive Divison"}
+]
+var mazeSwitch = 0
 
 var mousePressed = false;
 var buttonBools = [false, false, false];
@@ -73,6 +80,28 @@ const Pathfinder = () => {
         setGrid(grid);
         performAlgorithm(grid);
         return(grid);
+    }
+
+    const generateRecursiveDivisionMaze = () => {
+        if(!playing) {
+            clearVisualVisitedNodes()
+            const mazeGrid = RecursiveDivision(rows, cols)
+            const grid = new Array(rows)
+            for(let i = 0; i < rows; i++) {
+                grid[i] = new Array(cols)
+            }
+            createSpot(grid)
+            for(let i = 0; i < mazeGrid.length; i++) {
+                for(let j = 0; j < cols; j++) {
+                    if(mazeGrid[i][j] === 1 && !grid[i][j].isEnd)
+                        grid[i][j].isWall = true
+                }
+            }
+            addNeighbors(grid)
+            setGrid(grid)
+            performAlgorithm(grid)
+            return(grid)
+        }
     }
 
     function performAlgorithm(grid) {
@@ -355,6 +384,22 @@ const Pathfinder = () => {
         speed = speedOptions[switchSpeed].speed
     }
 
+    const handleMazeChange = (selectedOption) => {
+        for(let i = 0; i < mazeOptions.length; i++) {
+            if(mazeOptions[i].label === selectedOption.label) {
+                mazeSwitch = i
+            }
+        }
+        switch(mazeSwitch) {
+            case 0:
+                randomizeWalls()
+                break
+            case 1:
+                generateRecursiveDivisionMaze()
+                break
+        }
+    }
+
     function valuetext(value) {
         setWallDensity(value / 100)
         return `${value}%`
@@ -363,13 +408,16 @@ const Pathfinder = () => {
     return (
         <div className="Wrapper">
             <PathfinderToolbar>
-                
                 <div style={{width: 180}}>
-                    <Select text={speedOptions[switchSpeed]} defaultValue={speedOptions[switchSpeed]}
+                    <Select text={speedOptions[switchSpeed]} defaultValue={{value: 0, label: "Speed"}}
                     onChange={handleSpeedChange} options={speedOptions}/>
                 </div>
+                <div style={{width: 180}}>
+                    <Select text={{value: 0, label: "Maze Options"}} defaultValue={{value: 0, label: "Maze Options"}}
+                    onChange={handleMazeChange} options={mazeOptions}/>
+                </div>
                 <Button onClick={clearVisualVisitedNodes} idleText={'Clear Path'} color={'yellow'}/>
-                <Button onClick={visualizePath} idleText={'Visualize ' + algorithmsOptions[switchAlgorithm].label} color={'green'}/>
+                <Button onClick={visualizePath} idleText={'Visualize Path'} color={'green'}/>
                 <Button onClick={reset} idleText={'Reset Board'} color={'red'}/>
                 <div style={{width: 180}}>
                     <Select text={algorithmsOptions[switchAlgorithm]} defaultValue = {algorithmsOptions[0]}
@@ -386,7 +434,7 @@ const Pathfinder = () => {
             </PathfinderResults>
             {gridWithNode()}
             <PathfinderToolbar>
-                <div className="buttonBlock">
+                <div>
                     <h5 style={{color: 'white'}}>Wall Density</h5>
                     <Slider
                         aria-label="Wall Density"
@@ -400,7 +448,6 @@ const Pathfinder = () => {
                         max={50}
                     />
                 </div>
-                <Button onClick={randomizeWalls} idleText={'Randomize Walls'} color={'violet'} rounded/>
                 <Button onClick={alterWallsBool} idleText={'Customize Walls'} loadingText={'Tap on grid...'} messageDuration={2000} color={'violet'} rounded/>
                 <Button onClick={alterStartBool} idleText={'Move Start'} color={'green'} rounded/>
                 <Button onClick={alterEndBool} idleText={'Move End'} color={'red'} rounded/>
