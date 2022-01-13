@@ -2,6 +2,9 @@ import React, {Component, useState, useEffect} from 'react';
 import Node from "./Node";
 import Astar from "../algorithms/astar.js";
 import Bfs from "../algorithms/bfs.js";
+import Dfs from "../algorithms/dfs.js";
+import Djikstras from "../algorithms/djikstras.js"
+import Greedy_bfs from "../algorithms/greedy_bfs.js"
 import "./Pathfinder.css";
 import "./Node.css";
 import {Slider} from '@material-ui/core';
@@ -10,6 +13,9 @@ import Stack from 'stack-styled'
 import {PathfinderToolbar, PathfinderResults} from './NavBarElements.js'
 import Button from 'reactive-button';
 
+var speed = 30
+var playing = false
+
 let cols = 51;
 let rows = 20;
 
@@ -17,9 +23,24 @@ var timeTaken = 0;
 var lengthOfPath = 0;
 
 //dropdowns
-let algorithmsOptions = [{ value: 0, label: 'A* Search' },
-{ value: 1, label: 'Breadth-First Search' }]
+let algorithmsOptions = [
+{ value: 0, label: 'A* Search', children: [{value: 0, label: 'Manhattan'}, {value: 1, label: 'Euclidean'}, {value: 2, label: 'Octile'}, {value: 3, label: 'Chebyshev'}]},
+{ value: 1, label: 'Djikstras', children: [{value: 0, label: 'None'}]},
+{ value: 2, label: 'Greedy Best First Search', children: [{value: 0, label: 'Manhattan'}, {value: 1, label: 'Euclidean'}, {value: 2, label: 'Octile'}, {value: 3, label: 'Chebyshev'}]},
+{ value: 3, label: 'Breadth-First Search', children: [{value: 0, label: 'None'}]},
+{ value: 4, label: 'Depth-First Search', children: [{value: 0, label: 'None'}]}]
 var switchAlgorithm = 0
+
+var heuristicOptions = algorithmsOptions[0].children
+var switchHeuristic = 0
+var heuristicText = ""
+
+var speedOptions = [
+{ value: 0, label: "Slow", speed: 120},
+{ value: 1, label: "Moderate", speed: 75},
+{ value: 2, label: "Fast", speed: 30},
+{ value: 3, label: "Quick", speed: 5}]
+var switchSpeed = 1
 
 var mousePressed = false;
 var buttonBools = [false, false, false];
@@ -60,19 +81,25 @@ const Pathfinder = () => {
         const startNode = grid[NODE_START_ROW][NODE_START_COL];
         const endNode = grid[NODE_END_ROW][NODE_END_COL];
         timeTaken = performance.now();
-        let path = testProperAlgorithm(startNode, endNode);
+        let path = testProperAlgorithm(startNode, endNode, switchHeuristic);
         timeTaken = Math.trunc((performance.now() - timeTaken) * 1000) / 1000;
         lengthOfPath = path.path.length;
         setPath(path.path);
         setVisitedNodes(path.visitedNodes);
     }
 
-    function testProperAlgorithm(startNode, endNode) {
+    function testProperAlgorithm(startNode, endNode, switchHeuristic) {
         switch(switchAlgorithm) {
             case 0:
-                return Astar(startNode, endNode)
+                return Astar(startNode, endNode, switchHeuristic)
             case 1:
+                return Djikstras(startNode, endNode)
+            case 2:
+                return Greedy_bfs(startNode, endNode, switchHeuristic)
+            case 3:
                 return Bfs(startNode, endNode)
+            case 4:
+                return Dfs(startNode, endNode)
         }
     }
 
@@ -138,16 +165,18 @@ const Pathfinder = () => {
     }  
 
     function handleMouseDown(row, col) {
-        clearVisualVisitedNodes()
-        var newGrid = addMousePressedObject(Grid, row.row, col.col);
-        mousePressed = true;
-        if(buttonBools[1] || buttonBools[2]) {
-            newGrid = Grid
-            createSpot(newGrid)
+        if(!playing) {
+            clearVisualVisitedNodes()
+            var newGrid = addMousePressedObject(Grid, row.row, col.col);
+            mousePressed = true;
+            if(buttonBools[1] || buttonBools[2]) {
+                newGrid = Grid
+                createSpot(newGrid)
+            }
+            addNeighbors(newGrid);
+            setGrid(newGrid);
+            performAlgorithm(newGrid);
         }
-        addNeighbors(newGrid);
-        setGrid(newGrid);
-        performAlgorithm(newGrid);
     }
 
     function handleMouseEnter(row, col) {
@@ -227,6 +256,7 @@ const Pathfinder = () => {
         }
         setResultsText("Time: " + timeTaken + " ms")
         setResultsTwoText("Length: " + lengthOfPath + " units")
+        playing = false
         return (
             <div>
                 <p>{ResultsText}</p>
@@ -236,40 +266,49 @@ const Pathfinder = () => {
     };
 
     const visualizePath = () => {
-        performAlgorithm(Grid)
-        for(let i = 0; i <= VisitedNodes.length; i++) {
-            if(i === VisitedNodes.length) {
-                setTimeout(() => {
-                    visualizeShortestPath(Path);
-                }, 15 * i); //delayed frame rate
-            } else {
-                setTimeout(() => {
-                    const node = VisitedNodes[i];
-                    document.getElementById(`node-${node.x}-${node.y}`).className = "node node-visited";
-                }, 15 * i)
+        if(!playing) {
+            performAlgorithm(Grid)
+            playing = true
+            for(let i = 0; i <= VisitedNodes.length; i++) {
+                if(i === VisitedNodes.length) {
+                    setTimeout(() => {
+                        visualizeShortestPath(Path);
+                    }, speed * i); //delayed frame rate
+                } else {
+                    setTimeout(() => {
+                        const node = VisitedNodes[i];
+                        document.getElementById(`node-${node.x}-${node.y}`).className = "node node-visited";
+                    }, speed * i)
+                }
             }
         }
     };
 
     const randomizeWalls = () => {
-        let wallGrid = initializeGrid()
-        addWalls(wallGrid)
-        addNeighbors(wallGrid);
-        setGrid(wallGrid)
-        performAlgorithm(wallGrid)
-        clearVisualVisitedNodes()
+        if(!playing) {
+            let wallGrid = initializeGrid()
+            addWalls(wallGrid)
+            addNeighbors(wallGrid);
+            setGrid(wallGrid)
+            performAlgorithm(wallGrid)
+            clearVisualVisitedNodes()
+        }
     }
 
     const reset = () => {
-        initializeGrid()
-        clearVisualVisitedNodes()
-        setWallDensity(10)
+        if(!playing) {
+            initializeGrid()
+            clearVisualVisitedNodes()
+            setWallDensity(10)
+        }
     }
 
     function clearVisualVisitedNodes() {
-        for(let i = 0; i < VisitedNodes.length; i++) {
-            const node = VisitedNodes[i];
-            document.getElementById(`node-${node.x}-${node.y}`).className = "node";
+        if(!playing) {
+            for(let i = 0; i < VisitedNodes.length; i++) {
+                const node = VisitedNodes[i];
+                document.getElementById(`node-${node.x}-${node.y}`).className = "node";
+            }
         }
     }
 
@@ -285,30 +324,61 @@ const Pathfinder = () => {
         buttonBools = [false, false, !buttonBools[2]];
     }
 
-    function valuetext(value) {
-        setWallDensity(value / 100)
-        //randomizeWalls()
-        return `${value}%`
-    }
-
     const handleAlgoChange = (selectedOption) => {
         for(let i = 0; i < algorithmsOptions.length; i++) {
             if(algorithmsOptions[i].label === selectedOption.label) {
                 switchAlgorithm = i
+                heuristicOptions = algorithmsOptions[i].children
                 clearVisualVisitedNodes()
             }
         }
         performAlgorithm(Grid)
     }
 
+    const handleHeuristicChange = (selectedOption) => {
+        for(let i = 0; i < heuristicOptions.length; i++) {
+            if(heuristicOptions[i].label === selectedOption.label) {
+                switchHeuristic = i
+                clearVisualVisitedNodes()
+            }
+        }
+        heuristicText = heuristicOptions[switchHeuristic]
+        performAlgorithm(Grid)
+    }
+
+    const handleSpeedChange = (selectedOption) => {
+        for(let i = 0; i < speedOptions.length; i++) {
+            if(speedOptions[i].label === selectedOption.label) {
+                switchSpeed = i
+            }
+        }
+        speed = speedOptions[switchSpeed].speed
+    }
+
+    function valuetext(value) {
+        setWallDensity(value / 100)
+        return `${value}%`
+    }
+
     return (
         <div className="Wrapper">
             <PathfinderToolbar>
-                <Button onClick={visualizePath} idleText={'Visualize Path'} color={'green'}/>
+                
+                <div style={{width: 180}}>
+                    <Select text={speedOptions[switchSpeed]} defaultValue={speedOptions[switchSpeed]}
+                    onChange={handleSpeedChange} options={speedOptions}/>
+                </div>
                 <Button onClick={clearVisualVisitedNodes} idleText={'Clear Path'} color={'yellow'}/>
+                <Button onClick={visualizePath} idleText={'Visualize ' + algorithmsOptions[switchAlgorithm].label} color={'green'}/>
                 <Button onClick={reset} idleText={'Reset Board'} color={'red'}/>
-                <Select text={algorithmsOptions[switchAlgorithm]} onChange={handleAlgoChange}
-                options={algorithmsOptions}/>
+                <div style={{width: 180}}>
+                    <Select text={algorithmsOptions[switchAlgorithm]} defaultValue = {algorithmsOptions[0]}
+                    onChange={handleAlgoChange} options={algorithmsOptions}/>
+                </div>
+                <div style={{width: 180}}>
+                    <Select text={heuristicText} defaultValue={heuristicOptions[0]}
+                    onChange={handleHeuristicChange} options={heuristicOptions}/>
+                </div>
             </PathfinderToolbar>
             <PathfinderResults style={{color:'white'}}>
                 <h5>{ResultsText}</h5>

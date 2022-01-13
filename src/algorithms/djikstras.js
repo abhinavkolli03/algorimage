@@ -1,6 +1,4 @@
-import {manhattan_heuristic, euclidean_heuristic, octile_heuristic, chebyshev_heuristic} from "./heuristics.js"
-
-function Astar(startNode, endNode, switchHeuristic) {
+function Djikstras(startNode, endNode) {
     let openSet = [];
     openSet.push(startNode);
     let closedSet = [];
@@ -40,20 +38,7 @@ function Astar(startNode, endNode, switchHeuristic) {
                 let newPath = false;
                 if(!openSet.includes(neighbor)) {
                     newPath = true;
-                    switch(switchHeuristic) {
-                        case 0:
-                            neighbor.h = manhattan_heuristic(neighbor, endNode);
-                            break
-                        case 1:
-                            neighbor.h = euclidean_heuristic(neighbor, endNode);
-                            break
-                        case 2:
-                            neighbor.h = octile_heuristic(neighbor, endNode);
-                            break
-                        case 3: 
-                            neighbor.h = chebyshev_heuristic(neighbor, endNode);
-                            break
-                    }
+                    neighbor.h = 0;
                     openSet.push(neighbor)
                 } else if (tempG < neighbor.g) {
                     newPath = true;
@@ -73,4 +58,4 @@ function Astar(startNode, endNode, switchHeuristic) {
     return {path, visitedNodes, error: "No Path Found!"};
 }
 
-export default Astar;
+export default Djikstras;

@@ -1,6 +1,6 @@
 import {manhattan_heuristic, euclidean_heuristic, octile_heuristic, chebyshev_heuristic} from "./heuristics.js"
 
-function Astar(startNode, endNode, switchHeuristic) {
+function Greedy_bfs(startNode, endNode, switchHeuristic) {
     let openSet = [];
     openSet.push(startNode);
     let closedSet = [];
@@ -36,7 +36,6 @@ function Astar(startNode, endNode, switchHeuristic) {
         for(let i = 0; i < neighbors.length; i++) {
             let neighbor = neighbors[i];
             if(!closedSet.includes(neighbor) && !neighbor.isWall) {
-                let tempG = current.g + 1;
                 let newPath = false;
                 if(!openSet.includes(neighbor)) {
                     newPath = true;
@@ -55,13 +54,11 @@ function Astar(startNode, endNode, switchHeuristic) {
                             break
                     }
                     openSet.push(neighbor)
-                } else if (tempG < neighbor.g) {
-                    newPath = true;
-                }
+                } 
 
                 if(newPath) {
                     neighbor.previous = current;
-                    neighbor.g = tempG;
+                    neighbor.g = 0;
                     neighbor.f = neighbor.g + neighbor.h;
                 }
             }
@@ -73,4 +70,4 @@ function Astar(startNode, endNode, switchHeuristic) {
     return {path, visitedNodes, error: "No Path Found!"};
 }
 
-export default Astar;
+export default Greedy_bfs;

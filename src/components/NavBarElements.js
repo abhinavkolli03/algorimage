@@ -21,7 +21,7 @@ export const PathfinderToolbar = styled.nav`
   display: flex;
   text-align: center;
   justify-content: space-evenly;
-  padding: 0.5rem calc((100vw - 1000px) / 2);
+  padding: 10px;
   z-index: 10;
 `;
 

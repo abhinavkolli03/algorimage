@@ -1,11 +1,11 @@
-function Bfs(startNode, endNode) {
+function Dfs(startNode, endNode) {
     let openSet = [];
     openSet.push(startNode)
     let path = []
     let visitedNodes = []
     let closedSet = []
     while(openSet.length > 0) {
-        let current = openSet[0]
+        let current = openSet.pop()
         visitedNodes.push(current)
         if(current.x === endNode.x && current.y === endNode.y) {
             let temp = current;
@@ -35,4 +35,4 @@ function Bfs(startNode, endNode) {
     return {path, visitedNodes};
 }
 
-export default Bfs;
+export default Dfs;
