@@ -23,6 +23,11 @@ let rows = 21;
 var timeTaken = 0;
 var lengthOfPath = 0;
 
+var holdingRed = false;
+var holdingRedTempValue = [];
+var holdingGreen = false;
+var holdingGreenTempValue = [];
+
 //dropdowns
 let algorithmsOptions = [
 { value: 0, label: 'A* Search', children: [{value: 0, label: 'Manhattan'}, {value: 1, label: 'Euclidean'}, {value: 2, label: 'Octile'}, {value: 3, label: 'Chebyshev'}]},
@@ -50,7 +55,6 @@ var mazeOptions = [
 var mazeSwitch = 0
 
 var mousePressed = false;
-var buttonBools = [false, false, false];
 
 var NODE_START_ROW = 9;
 var NODE_START_COL = 12;
@@ -196,12 +200,16 @@ const Pathfinder = () => {
     function handleMouseDown(row, col) {
         if(!playing) {
             clearVisualVisitedNodes()
+            if(Grid[row.row][col.col].isEnd) {
+                holdingRed = true
+                holdingRedTempValue = [row.row, col.col]
+            }
+            else if(Grid[row.row][col.col].isStart) {
+                holdingGreen = true
+                holdingGreenTempValue = [row.row, col.col]
+            }
             var newGrid = addMousePressedObject(Grid, row.row, col.col);
             mousePressed = true;
-            if(buttonBools[1] || buttonBools[2]) {
-                newGrid = Grid
-                createSpot(newGrid)
-            }
             addNeighbors(newGrid);
             setGrid(newGrid);
             performAlgorithm(newGrid);
@@ -210,38 +218,51 @@ const Pathfinder = () => {
 
     function handleMouseEnter(row, col) {
         //clearVisualVisitedNodes()
-        if(buttonBools[0] && mousePressed) {
-            const newGrid = addMousePressedObject(Grid, row.row, col.col);
-            addNeighbors(newGrid);
-            setGrid(newGrid);
-            performAlgorithm(newGrid);
+        var newGrid = Grid
+        var changed = false
+        if(!holdingRed && !holdingGreen && mousePressed) {
+            newGrid = addMousePressedObject(Grid, row.row, col.col);
+        } else if(holdingRed && mousePressed) {
+            newGrid = changeEnd(Grid, row.row, col.col)
+            changed = true
+        } else if(holdingGreen && mousePressed) {
+            newGrid = changeStart(Grid, row.row, col.col)
+            changed = true
         }
+        if(changed) {
+            createSpot(newGrid)
+        }
+        addNeighbors(newGrid);
+        setGrid(newGrid);
+        performAlgorithm(newGrid);
     }
 
     function handleMouseUp() {
         mousePressed = false
+        holdingRed = false
+        holdingRedTempValue = []
+        holdingGreen = false
+        holdingGreenTempValue = []
+    }
+
+    const changeEnd = (grid, row, col) => {
+        NODE_END_ROW = row;
+        NODE_END_COL = col;
+        return grid
+    }
+
+    const changeStart = (grid, row, col) => {
+        NODE_START_ROW = row;
+        NODE_START_COL = col;
+        return grid
     }
 
     const addMousePressedObject = (grid, row, col) => {
         const tempNode = grid[row][col];
-        if(buttonBools[0] && !tempNode.isEnd) {
+        if(!tempNode.isEnd && !tempNode.isStart) {
             tempNode.isWall = !tempNode.isWall
             grid[row][col] = tempNode;
         }
-        else if(buttonBools[1] || buttonBools[2])
-            grid = changeStartOrEndNode(grid, row, col)
-        return grid;
-    }
-
-    function changeStartOrEndNode(grid, row, col) {
-        if(buttonBools[1]) {
-            NODE_START_ROW = row
-            NODE_START_COL = col
-        } else {
-            NODE_END_ROW = row
-            NODE_END_COL = col
-        }
-        clearVisualVisitedNodes()
         return grid;
     }
 
@@ -341,18 +362,6 @@ const Pathfinder = () => {
         }
     }
 
-    const alterWallsBool = () => {
-        buttonBools = [!buttonBools[0], false, false];
-    }
-
-    const alterStartBool = () => {
-        buttonBools = [false, !buttonBools[1], false];
-    }
-
-    const alterEndBool = () => {
-        buttonBools = [false, false, !buttonBools[2]];
-    }
-
     const handleAlgoChange = (selectedOption) => {
         for(let i = 0; i < algorithmsOptions.length; i++) {
             if(algorithmsOptions[i].label === selectedOption.label) {
@@ -409,20 +418,12 @@ const Pathfinder = () => {
         <div className="Wrapper">
             <PathfinderToolbar>
                 <div style={{width: 180}}>
-                    <Select text={speedOptions[switchSpeed]} defaultValue={{value: 0, label: "Speed"}}
-                    onChange={handleSpeedChange} options={speedOptions}/>
-                </div>
-                <div style={{width: 180}}>
-                    <Select text={{value: 0, label: "Maze Options"}} defaultValue={{value: 0, label: "Maze Options"}}
-                    onChange={handleMazeChange} options={mazeOptions}/>
+                    <Select text={algorithmsOptions[switchAlgorithm]} defaultValue = {algorithmsOptions[0]}
+                    onChange={handleAlgoChange} options={algorithmsOptions}/>
                 </div>
                 <Button onClick={clearVisualVisitedNodes} idleText={'Clear Path'} color={'yellow'}/>
                 <Button onClick={visualizePath} idleText={'Visualize Path'} color={'green'}/>
                 <Button onClick={reset} idleText={'Reset Board'} color={'red'}/>
-                <div style={{width: 180}}>
-                    <Select text={algorithmsOptions[switchAlgorithm]} defaultValue = {algorithmsOptions[0]}
-                    onChange={handleAlgoChange} options={algorithmsOptions}/>
-                </div>
                 <div style={{width: 180}}>
                     <Select text={heuristicText} defaultValue={heuristicOptions[0]}
                     onChange={handleHeuristicChange} options={heuristicOptions}/>
@@ -434,6 +435,14 @@ const Pathfinder = () => {
             </PathfinderResults>
             {gridWithNode()}
             <PathfinderToolbar>
+                <div style={{width: 180}}>
+                    <Select menuPlacement="top" text={speedOptions[switchSpeed]} defaultValue={speedOptions[2]}
+                    onChange={handleSpeedChange} options={speedOptions}/>
+                </div>
+                <div style={{width: 250}}>
+                    <Select menuPlacement="top" text={{value: 0, label: "Maze Options"}} defaultValue={{value: 0, label: "Maze Options"}}
+                    onChange={handleMazeChange} options={mazeOptions}/>
+                </div>
                 <div>
                     <h5 style={{color: 'white'}}>Wall Density</h5>
                     <Slider
@@ -448,9 +457,9 @@ const Pathfinder = () => {
                         max={50}
                     />
                 </div>
-                <Button onClick={alterWallsBool} idleText={'Customize Walls'} loadingText={'Tap on grid...'} messageDuration={2000} color={'violet'} rounded/>
+                {/*<Button onClick={alterWallsBool} idleText={'Customize Walls'} loadingText={'Tap on grid...'} messageDuration={2000} color={'violet'} rounded/>
                 <Button onClick={alterStartBool} idleText={'Move Start'} color={'green'} rounded/>
-                <Button onClick={alterEndBool} idleText={'Move End'} color={'red'} rounded/>
+                <Button onClick={alterEndBool} idleText={'Move End'} color={'red'} rounded/>*/}
             </PathfinderToolbar>
         </div>
     );
